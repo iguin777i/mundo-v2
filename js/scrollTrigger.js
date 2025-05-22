@@ -24,7 +24,6 @@ once(document.documentElement, "touchstart", () => {
 });
 
 function initScrollVideo() {
-  // Evita múltiplas execuções
   if (video.dataset.scrollInit) return;
   video.dataset.scrollInit = "true";
 
@@ -38,7 +37,6 @@ function initScrollVideo() {
     }
   });
 
-  // Animação contínua
   function update() {
     scroll += (scrollTarget - scroll) * 0.3;
 
@@ -56,7 +54,6 @@ function initScrollVideo() {
   update();
 }
 
-// Garante que ScrollTrigger funcione mesmo que o vídeo demore para carregar
 function waitForVideoReady(maxAttempts = 10) {
   let attempts = 0;
   const interval = setInterval(() => {
@@ -71,43 +68,18 @@ function waitForVideoReady(maxAttempts = 10) {
   }, 200);
 }
 
-// Aguarda DOM e vídeo carregado
 window.addEventListener("DOMContentLoaded", () => {
   waitForVideoReady();
-});
-
-// Corrige blob para desktop (fluidez extra)
-if (!isMobile) {
-  setTimeout(() => {
-    if (window.fetch) {
-      fetch(src)
-        .then((response) => response.blob())
-        .then((response) => {
-          const blobURL = URL.createObjectURL(response);
-          const t = video.currentTime;
-
-          video.setAttribute("src", blobURL);
-          video.load();
-
-          video.addEventListener("canplay", () => {
-            video.currentTime = t + 0.01;
-            waitForVideoReady();
-          }, { once: true });
-        });
-    }
-  }, 1000);
-}
-
-// Corrige resize, rotação e restaura scroll
-window.addEventListener("orientationchange", () => {
-  setTimeout(() => ScrollTrigger.refresh(), 500);
 });
 
 window.addEventListener("resize", () => {
   ScrollTrigger.refresh();
 });
 
-// Backup: força refresh 3s após carregamento (usuário rolou durante o loading)
+window.addEventListener("orientationchange", () => {
+  setTimeout(() => ScrollTrigger.refresh(), 500);
+});
+
 setTimeout(() => {
   ScrollTrigger.refresh();
 }, 3000);

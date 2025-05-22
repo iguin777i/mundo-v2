@@ -8227,22 +8227,33 @@ form textarea:required:valid {
 
 .video-background {
   position: fixed;
-  top: 50%;
-  left: 50%;
+  top: 0;
+  left: 0;
   min-width: 100%;
-  min-height: 100%;
-  width: 100%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
+  min-height: 100vh;
+  width: auto;
+  height: auto;
   object-fit: cover;
   will-change: transform;
   image-rendering: auto;
+  z-index: 1;
+}
+
+.overlay-div {
+  position: relative;
+  z-index: 1000; /* Ensures div is above the video */
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5); /* Optional: for visibility */
+  color: white;
+  text-align: center;
+  padding: 20px;
+  height: 100px; /* Adjust height as needed */
 }
 
 #container {
   height: 500vh;
+  position: relative; /* Ensures container respects z-index stacking */
 }
-
 
 /* LINE SCROLL */
 
