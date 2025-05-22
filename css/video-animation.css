@@ -1,0 +1,80 @@
+/* Ajustes adicionais para garantir que o vídeo só role com o scroll */
+.main-video-1 {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  transform-origin: center;
+  max-width: 100%;
+  margin: 0 auto;
+  z-index: 5;
+}
+
+/* Estilo para o vídeo dentro do container */
+.main-video-1 video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center center;
+  will-change: transform; /* Otimização para animações */
+}
+
+/* Quando o vídeo está centralizado e em tela cheia */
+.main-video-1.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100;
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Barra de progresso do vídeo */
+.video-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  width: 0%;
+  background: linear-gradient(90deg, #9747FF, #F2F5FC);
+  z-index: 10;
+  transition: width 0.1s linear;
+}
+
+/* Overlay para melhor visualização */
+.video-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(13, 11, 25, 0.7);
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+
+.video-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Espaço para o pin-spacer do ScrollTrigger */
+.pin-spacer {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-bottom: 0 !important;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .video-progress {
+    height: 3px;
+  }
+  
+  .main-video-1.fullscreen {
+    height: 100vh !important;
+  }
+}
