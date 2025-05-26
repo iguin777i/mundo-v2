@@ -1,0 +1,21 @@
+/* Estilos adicionais para garantir comportamento correto dos cards de stack */
+.stack-item {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.stack-item:first-child {
+  opacity: 1; /* O primeiro card sempre visível */
+}
+
+/* Classe aplicada quando os cards estão ativos */
+.stack-wrapper.active .stack-item {
+  opacity: 1;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 768px) {
+  .stack-wrapper {
+    overflow: visible;
+  }
+}

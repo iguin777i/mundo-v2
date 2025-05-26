@@ -1,4 +1,4 @@
-// ScrollTrigger final para o vídeo Down the Rabbit Hole
+// ScrollTrigger final aprimorado para o vídeo Down the Rabbit Hole - Versão Bidirecional
 document.addEventListener('DOMContentLoaded', function() {
   // Elementos principais
   const videoBlock = document.querySelector('.main-video-1');
@@ -10,10 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
   
-  // Atualizar o src do vídeo para o novo arquivo
-  video.src = "./img/backgrounds/Down the Rabbit Hole - scrolltrigger-1920.webm";
-  
-  // Remover atributos de autoplay e loop
+  // Remover atributos de autoplay e loop para garantir controle apenas via scroll
   video.removeAttribute('autoplay');
   video.removeAttribute('loop');
   video.muted = true; // Manter mudo para melhor experiência
@@ -33,7 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
   let originalHeight = videoBlock.offsetHeight;
   let originalWidth = videoBlock.offsetWidth;
   let originalPosition = null;
-  let scrollTriggerInstance = null;
+  let isExpanding = false;
+  let isScrolling = false;
+  let isReturning = false;
+  let lastScrollDirection = 0; // 1 para baixo, -1 para cima, 0 para inicial
+  let lastScrollProgress = 0;
   
   // Registrar o plugin ScrollTrigger
   gsap.registerPlugin(ScrollTrigger);
@@ -47,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initScrollTrigger();
   });
   
-  // Carregar o vídeo manualmente
+  // Forçar carregamento do vídeo
   video.load();
   
   // Função para atualizar a barra de progresso do vídeo
@@ -66,76 +67,240 @@ document.addEventListener('DOMContentLoaded', function() {
     // Salvar posição original para referência
     originalPosition = videoBlock.getBoundingClientRect();
     
-    // ScrollTrigger principal para controlar a expansão e o vídeo
-    scrollTriggerInstance = ScrollTrigger.create({
+    // Timeline para a expansão inicial - mais suave
+    const expandTimeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: videoBlock,
+        start: "top 80%", // Inicia quando o topo do vídeo atinge 80% da viewport
+        end: "top 20%", // Termina quando o topo do vídeo atinge 20% da viewport
+        scrub: 1, // Aumentar o valor para uma transição mais suave
+        markers: false,
+        onEnter: () => {
+          isExpanding = true;
+          videoBlock.classList.add('scrolling');
+        },
+        onLeaveBack: () => {
+          isExpanding = false;
+          videoBlock.classList.remove('scrolling');
+          videoBlock.classList.remove('fullscreen');
+          videoOverlay.classList.remove('active');
+        },
+        onComplete: () => {
+          isExpanding = false;
+        }
+      }
+    });
+    
+    // Animação de expansão - mais fluida
+    expandTimeline.fromTo(videoBlock, 
+      { 
+        height: originalHeight,
+        width: "100%",
+        opacity: 1
+      },
+      { 
+        height: window.innerHeight,
+        width: "100%",
+        opacity: 1,
+        ease: "power2.inOut", // Ease mais suave
+        onUpdate: function() {
+          // Quando atingir 80% da expansão, adicionar classe fullscreen
+          if (this.progress() > 0.8 && !videoBlock.classList.contains('fullscreen')) {
+            videoBlock.classList.add('fullscreen');
+            videoOverlay.classList.add('active');
+            
+            // Garantir que o vídeo esteja visível e centralizado
+            gsap.to(video, {
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              duration: 0.5,
+              ease: "power2.out"
+            });
+          }
+        }
+      }
+    );
+    
+    // ScrollTrigger para controlar o vídeo após a expansão - mais lento e suave
+    // Agora com suporte bidirecional (subida e descida)
+    const videoScrollTrigger = ScrollTrigger.create({
       trigger: videoBlock,
-      start: "top 80%", // Inicia quando o topo do vídeo atinge 80% da viewport
-      end: "bottom -100%", // Termina bem depois do vídeo para dar espaço para o scroll
-      scrub: 0.5, // Sincroniza com o scroll com um pequeno atraso para suavizar
+      start: "top 20%", // Começa onde a expansão termina
+      end: `+=${videoDuration * 500}`, // Aumentar multiplicador para scroll mais lento
+      scrub: 1.5, // Aumentar para transição mais suave
       pin: true, // Fixa o vídeo na tela durante o scroll
       pinSpacing: true,
       anticipatePin: 1, // Melhora a performance do pin
       markers: false,
       onEnter: () => {
-        // Quando o vídeo entra na viewport
-        console.log("Vídeo entrou na viewport");
-        // Garantir que o vídeo esteja pausado inicialmente
-        video.pause();
+        isScrolling = true;
+        videoBlock.classList.add('fullscreen');
+        videoOverlay.classList.add('active');
+        
+        // Garantir que o vídeo esteja visível e centralizado
+        gsap.to(video, {
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          duration: 0.5,
+          ease: "power2.out"
+        });
       },
       onUpdate: (self) => {
-        // Atualizar o progresso do vídeo com base no scroll
-        if (videoDuration > 0) {
+        // Detectar direção do scroll
+        const currentProgress = self.progress;
+        const direction = currentProgress > lastScrollProgress ? 1 : -1;
+        
+        // Atualizar variáveis de controle
+        lastScrollDirection = direction;
+        lastScrollProgress = currentProgress;
+        
+        // Atualizar o progresso do vídeo com base no scroll (bidirecional)
+        if (videoDuration > 0 && isScrolling) {
           // Usar o progresso do scroll para definir o tempo do vídeo
           const videoTime = self.progress * videoDuration;
           
-          // Aplicar o tempo do vídeo
-          if (Math.abs(video.currentTime - videoTime) > 0.1) {
-            video.currentTime = videoTime;
+          // Aplicar o tempo do vídeo com interpolação suave
+          gsap.to(video, {
+            currentTime: videoTime,
+            duration: 0.1,
+            overwrite: true,
+            ease: "none"
+          });
+        }
+        
+        // Verificar se o vídeo está próximo do fim para iniciar o fade out
+        if (self.progress > 0.95) {
+          if (!videoBlock.classList.contains('returning')) {
+            videoBlock.classList.add('returning');
+          }
+        } else {
+          if (videoBlock.classList.contains('returning')) {
+            videoBlock.classList.remove('returning');
           }
         }
         
-        // Expandir para tela cheia quando estiver no centro da viewport
-        if (self.progress > 0.1 && self.progress < 0.9) {
-          if (!videoBlock.classList.contains('fullscreen')) {
-            videoBlock.classList.add('fullscreen');
-            videoOverlay.classList.add('active');
-          }
-        } else {
-          if (videoBlock.classList.contains('fullscreen')) {
+        // Log para debug
+        console.log(`Scroll Direction: ${direction === 1 ? 'Down' : 'Up'}, Progress: ${self.progress.toFixed(2)}, Video Time: ${video.currentTime.toFixed(2)}`);
+      },
+      onLeave: () => {
+        isScrolling = false;
+        isReturning = true;
+        
+        // Iniciar o processo de ocultação
+        videoBlock.classList.add('returning');
+        
+        // Fade out suave
+        gsap.to(videoBlock, {
+          opacity: 0,
+          duration: 0.8,
+          ease: "power2.inOut",
+          onComplete: () => {
+            videoBlock.classList.add('hidden');
             videoBlock.classList.remove('fullscreen');
             videoOverlay.classList.remove('active');
           }
-        }
+        });
       },
-      onLeave: () => {
-        // Quando o usuário rola para além do vídeo
+      onLeaveBack: () => {
+        isScrolling = false;
+      },
+      onEnterBack: () => {
+        // Remover classes de ocultação ao voltar
+        videoBlock.classList.remove('hidden');
+        videoBlock.classList.remove('returning');
+        
+        // Fade in suave
+        gsap.to(videoBlock, {
+          opacity: 1,
+          duration: 0.5,
+          ease: "power2.inOut"
+        });
+        
+        // Garantir que estamos em modo de scrolling
+        isScrolling = true;
+      }
+    });
+    
+    // Timeline para o retorno ao tamanho original - mais suave
+    const returnTimeline = gsap.timeline({
+      scrollTrigger: {
+        trigger: videoBlock,
+        start: () => `+=${videoDuration * 500 + 100}`, // Começa logo após o fim do vídeo
+        end: () => `+=${window.innerHeight * 1.5}`, // Duração do retorno mais longa
+        scrub: 1, // Mais suave
+        markers: false,
+        onEnter: () => {
+          isReturning = true;
+          
+          // Garantir que o vídeo esteja oculto
+          videoBlock.classList.add('hidden');
+        },
+        onLeaveBack: () => {
+          isReturning = false;
+          
+          // Remover ocultação ao voltar
+          videoBlock.classList.remove('hidden');
+          videoBlock.classList.remove('returning');
+          
+          // Restaurar visibilidade
+          gsap.to(videoBlock, {
+            opacity: 1,
+            duration: 0.5,
+            ease: "power2.inOut",
+            onComplete: () => {
+              videoBlock.classList.add('fullscreen');
+              videoOverlay.classList.add('active');
+            }
+          });
+        },
+        onComplete: () => {
+          isReturning = false;
+        }
+      }
+    });
+    
+    // Animação de retorno - mais suave
+    returnTimeline.to(videoBlock, {
+      height: originalHeight,
+      width: "100%",
+      opacity: 0, // Garantir que fique invisível
+      ease: "power2.inOut", // Ease mais suave
+      onStart: function() {
+        videoBlock.classList.add('returning');
         videoBlock.classList.remove('fullscreen');
         videoOverlay.classList.remove('active');
       },
-      onEnterBack: () => {
-        // Quando o usuário rola de volta para o vídeo
-        console.log("Vídeo entrou novamente na viewport");
+      onComplete: function() {
+        videoBlock.classList.remove('scrolling');
+        videoBlock.classList.remove('returning');
+        videoBlock.classList.add('hidden');
+        
+        // Restaurar estilos originais
+        gsap.set(video, {
+          width: "100%",
+          height: "100%",
+          objectFit: "cover"
+        });
+        
+        // Após um tempo, restaurar a visibilidade para o próximo ciclo
+        setTimeout(() => {
+          videoBlock.classList.remove('hidden');
+          gsap.to(videoBlock, {
+            opacity: 1,
+            duration: 0.5,
+            ease: "power2.inOut"
+          });
+        }, 500);
       }
     });
   }
   
   // Ajustar em caso de redimensionamento da janela
   window.addEventListener('resize', function() {
-    if (scrollTriggerInstance) {
-      // Atualizar valores originais
-      originalHeight = videoBlock.offsetHeight;
-      originalWidth = videoBlock.offsetWidth;
-      
-      // Atualizar ScrollTrigger
-      ScrollTrigger.refresh();
-    }
-  });
-  
-  // Prevenir qualquer comportamento que possa causar reprodução automática
-  video.addEventListener('play', function(e) {
-    // Se não estiver sendo controlado pelo ScrollTrigger, pausar
-    if (!scrollTriggerInstance || !scrollTriggerInstance.isActive) {
-      video.pause();
-    }
+    originalHeight = videoBlock.offsetHeight;
+    originalWidth = videoBlock.offsetWidth;
+    ScrollTrigger.refresh();
   });
 });

@@ -145,42 +145,6 @@ gsap.to(toTop, {
 // --------------------------------------------- //
 // Stacking Cards Start
 // --------------------------------------------- //
-const cards  = document.querySelectorAll('.stack-item');
-const stickySpace  = document.querySelector('.stack-offset');
-const animation = gsap.timeline();
-let cardHeight;
-
-if(document.querySelector(".stack-item")) {
-
-  function initCards(){
-    animation.clear();
-    cardHeight = cards[0].offsetHeight;
-    //console.log("initCards()", cardHeight);
-    cards.forEach((card, index) => {
-      if(index > 0){
-        gsap.set(card, {y:index * cardHeight});
-        animation.to(card, {y:0, duration:index*0.5, ease:"none"},0);
-      }
-    });
-  };
-  initCards();
-
-  ScrollTrigger.create({
-    trigger: ".stack-wrapper",
-    start: "top top",
-    pin: true,
-    end: ()=>`+=${(cards.length * cardHeight) + stickySpace.offsetHeight}`,
-    scrub: true,
-    animation: animation,
-    //markers: true,
-    invalidateOnRefresh: true
-  });
-
-  ScrollTrigger.addEventListener("refreshInit", initCards);
-};
-// --------------------------------------------- //
-// Stacking Cards End
-// --------------------------------------------- //
 
 // --------------------------------------------- //
 // Scroll Animations Start

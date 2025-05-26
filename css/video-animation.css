@@ -1,8 +1,8 @@
-/* Ajustes adicionais para garantir que o vídeo só role com o scroll */
+/* Estilos finais aprimorados para a animação do vídeo Down the Rabbit Hole */
 .main-video-1 {
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1); /* Transição mais suave */
   transform-origin: center;
   max-width: 100%;
   margin: 0 auto;
@@ -17,17 +17,44 @@
   display: block;
   transform-origin: center center;
   will-change: transform; /* Otimização para animações */
+  transition: transform 0.5s ease-out; /* Transição suave para o vídeo */
 }
 
-/* Quando o vídeo está centralizado e em tela cheia */
+/* Quando o vídeo está expandido em tela cheia */
 .main-video-1.fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 100;
-  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important; /* Forçar largura total */
+  height: 100vh !important; /* Forçar altura total */
+  z-index: 1000 !important; /* Z-index mais alto para garantir que fique acima de tudo */
+  background-color: #0D0B19;
+  margin: 0 !important; /* Remover margens */
+  padding: 0 !important; /* Remover padding */
+  display: flex !important; /* Usar flexbox para centralização */
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important; /* Garantir que nada vaze */
+  max-width: none !important;
+  max-height: none !important;
+  transform: none !important;
+}
+
+/* Ajuste específico para o vídeo em modo fullscreen */
+.main-video-1.fullscreen video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important; /* Cobrir toda a área mantendo proporção */
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  margin: auto !important;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* Barra de progresso do vídeo */
@@ -38,7 +65,7 @@
   height: 4px;
   width: 0%;
   background: linear-gradient(90deg, #9747FF, #F2F5FC);
-  z-index: 10;
+  z-index: 1001; /* Acima do vídeo */
   transition: width 0.1s linear;
 }
 
@@ -49,11 +76,11 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(13, 11, 25, 0.7);
-  z-index: 99;
+  background: rgba(13, 11, 25, 0.3);
+  z-index: 999; /* Abaixo do vídeo, mas acima do resto */
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.8s ease; /* Transição mais suave */
 }
 
 .video-overlay.active {
@@ -65,16 +92,60 @@
 .pin-spacer {
   width: 100% !important;
   max-width: 100% !important;
+}
+
+/* Classe para quando o vídeo está sendo controlado pelo scroll */
+.main-video-1.scrolling {
+  transition: transform 0.3s ease-out; /* Transição mais suave durante o scroll */
+}
+
+/* Classe para quando o vídeo terminou e está retornando */
+.main-video-1.returning {
+  opacity: 0.8; /* Começa a desaparecer */
+  transition: all 0.8s ease-out;
+}
+
+.main-video-1.hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 0.8s ease-out, visibility 0s 0.8s !important;
+}
+
+/* Ajustes para o container pai */
+.content__block {
+  position: relative;
+  overflow: visible !important; /* Permitir que o vídeo expanda além do container */
+}
+
+/* Garantir que o pin-spacer não interfira no layout */
+.pin-spacer {
+  padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
 
-/* Responsividade */
+/* Ajustes para garantir centralização em todas as resoluções */
+@media (max-width: 1200px) {
+  .main-video-1.fullscreen {
+    height: 100vh !important;
+    width: 100vw !important;
+  }
+}
+
 @media (max-width: 768px) {
   .video-progress {
     height: 3px;
   }
   
   .main-video-1.fullscreen {
+    height: 100vh !important;
+    width: 100vw !important;
+  }
+}
+
+/* Ajustes para dispositivos móveis */
+@media (max-width: 576px) {
+  .main-video-1.fullscreen video {
+    width: 100vw !important;
     height: 100vh !important;
   }
 }
